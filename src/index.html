@@ -1,0 +1,135 @@
+<html>
+        <head>
+            <title>Image</title>
+            <style>
+                .label {
+                    margin-right: 10px;
+                    color: #8A8A8A;
+                    width: 70px;
+                }
+                .container {
+                    display: flex;
+                    margin-bottom: 20px;
+                    align-items: flex-start;
+                }
+                .prompt {
+                    width: 400px;
+                    height: 200px;
+                }
+                .left {
+                    display: flex;
+                    float: left;
+                    flex-direction: column;
+                    width:500px;
+                }
+                .image-container{
+                    display: flex;
+                    flex-direction:  column;
+                }
+                .image-preview {
+                    display: flex;
+                    width: 400px;
+                    flex-wrap: wrap;
+                }
+                .image-preview img{
+                    width: 100px;
+                    height: 100px;
+                    margin: 10px;
+                }
+                .right {
+                    display: flex;
+                }
+                #result {
+                    font-size: 14px;
+                    width: 400px;
+                }
+            </style>
+            <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/viewerjs/1.10.0/viewer.min.css">
+            <script src="https://cdn.bootcdn.net/ajax/libs/viewerjs/1.10.0/viewer.min.js"></script>
+        </head>
+        <body>
+            <div class="left">
+                <div class="container">
+                    <span class="label">图片:</span>
+                    <div class="image-container">
+                        <input id="image" type="file" multiple />
+                        <div class="image-preview"></div>
+                    </div>
+                </div>
+                <div class="container">
+                    <span class="label">提示词:</span><textarea id="prompt" class="prompt"></textarea>
+                </div>
+                <div class="container">
+                    <button id="send" type="submit">提交</button>
+                </div>
+            </div>
+            <div class="right">
+                <div class="container">
+                    <span class="label">结果:</span><span id="result"></span>
+                </div>
+            </div>
+            
+            
+            <script>
+                let view = new Viewer(document.querySelector('.image-preview'));
+                document.getElementById("image").addEventListener("change", function(){
+                    let files = document.getElementById('image').files;
+                    for(let i = 0; i < files.length; i++) {
+                        let file = files[i];
+                        let reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = function(){
+                            var img = document.createElement("img");
+                            img.src = reader.result;
+                            document.querySelector(".image-preview").appendChild(img);
+                            view.update();
+                        }
+                    }
+                })
+
+                let id = 0;
+                function loading(){
+                    document.getElementById("result").innerHTML = "思考中";
+                    let num = 1;
+                    id = setInterval(function(){
+                        if(num > 3){
+                            num = 1;
+                        }
+                        document.getElementById("result").innerHTML = "思考中" + '.'.repeat(num);
+                        num++;
+                    }, 200);
+                }
+
+                function stopLoading(){
+                    clearInterval(id);
+                }
+
+
+
+                document.getElementById("send").addEventListener("click", function(){
+                    let images = document.querySelectorAll(".image-preview img");
+                    let prompt = document.getElementById("prompt").value;
+                    let image = [];
+                    for(let i = 0; i < images.length; i++) {
+                        image.push(images[i].src);
+                    }
+                    data = {
+                        prompt: prompt,
+                        image: image
+                    };
+                    loading();
+                    fetch("/ai", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(data)
+                    }).then(res => res.json())
+                    .then(res => {
+                        stopLoading();
+                        document.getElementById("result").innerText = res.message;
+                    })
+                })
+            </script>
+        </body>
+    </html>
