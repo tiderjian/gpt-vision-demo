@@ -36,8 +36,8 @@ pub struct MyData {
 
 async fn send_ai(Json(payload): Json<MyData>) -> impl IntoResponse{
     let config = AzureConfig::new()
-        .with_api_base("https://australia-east-yl.openai.azure.com")
-        .with_api_version("2023-07-01-preview")
+        .with_api_base(env::var("API_BASE").unwrap())
+        .with_api_version(env::var("API_VERSION").unwrap())
         .with_deployment_id(env::var("DEPLOYMENT_ID").unwrap())
         .with_api_key(env::var("AZURE_OPENAI_API_KEY").unwrap());
 
